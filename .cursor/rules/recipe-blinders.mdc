@@ -1,0 +1,531 @@
+---
+description: Rules for Social Recipe Binders Project Implementation
+globs: ["**/*.{ts,tsx,js,jsx}"]
+alwaysApply: true
+---
+
+# Social Recipe Binders Implementation Rules
+
+## Project Structure
+- Follow Next.js App Router pattern
+- Organize by feature (auth, recipes, binders)
+- Maintain clean separation of concerns (UI, data, auth)
+
+## Database Schema
+- Use Drizzle ORM for type-safe database operations
+- All tables must have created_at and updated_at timestamps
+- Use UUIDs for primary keys
+- Foreign keys must have cascade delete when appropriate
+- Follow singular naming for schema objects, plural for table names
+
+## Authentication 
+- Use NextAuth.js version 5 with the beta API
+- Implement both Google OAuth and email authentication
+- All protected routes must use middleware for authorization
+- Support user roles/permissions for sharing resources
+
+## Components
+- Use TypeScript for all components with proper prop typing
+- Create reusable UI components in src/components/ui
+- Feature-specific components go in their respective folders
+- Follow atomic design principles (atoms, molecules, organisms)
+
+## API Routes
+- Use Next.js Route Handlers with proper request validation
+- Follow RESTful principles for API design
+- Implement proper error handling and status codes
+- Use zod for input validation
+
+## State Management
+- Use React Server Components where possible
+- Client components should be limited to interactive UI elements
+- Use React Context for global state when necessary
+- Maintain proper loading states for all async operations
+
+## Styling
+- Use Tailwind CSS with consistent class naming
+- Maintain responsive design for all screen sizes
+- Follow a consistent color scheme based on Tailwind's color palette
+- Support both light and dark modes
+
+## Recipe Data Model
+- Recipes must store ingredients as structured data (not just text)
+- Recipe steps should be ordered and support rich text
+- Support image uploads for recipes
+- Include proper metadata (servings, prep time, etc.)
+
+## Recipe Binders
+- Binders are collections of recipes
+- Support different access levels (private, shared, public)
+- Allow users to organize recipes into multiple binders
+- Support sharing binders with specific users with different permissions
+
+## Sharing System
+- Implement fine-grained permissions (view, edit, admin)
+- Support sharing via email or direct link
+- Maintain an audit trail of share events
+- Allow revocation of access
+
+## Performance
+- Implement proper caching strategies
+- Use optimistic UI updates for better user experience
+- Lazy load components and images when appropriate
+- Minimize client-side JavaScript
+
+## Security
+- Sanitize all user inputs
+- Implement proper CSRF protection
+- Use content security policies
+- Validate permissions on both client and server
+
+## Quality Assurance
+- Ensure web app runs without bugs or issues
+- Implement proper error boundaries
+- Add comprehensive logging for debugging
+- Use type checking throughout the codebase
+
+
+
+
+## Implementation Steps（具体实施步骤）
+
+### Phase 1: Project Initialization and Setup
+
+#### Step 1: Project Setup and Dependencies
+1. Create a new Next.js project with App Router
+   ```bash
+   npx create-next-app@latest recipe-binders --typescript --tailwind --app
+   ```
+2. Install key dependencies
+   ```bash
+   npm install next-auth@beta @auth/drizzle-adapter drizzle-orm @vercel/postgres
+   npm install -D drizzle-kit zod
+   npm install react-hook-form @hookform/resolvers lucide-react
+   ```
+3. Configure Tailwind CSS theme and color scheme
+4. Set up environment variables (.env file)
+
+#### Step 2: Database Schema Design and Implementation
+1. Create `src/schema` directory
+2. Implement user schema (users.ts)
+   - Define users table
+   - Set up NextAuth required accounts, sessions, and verification_tokens tables
+3. Implement recipe binders schema (binders.ts)
+   - Define recipe_binders table
+   - Set up sharing permissions (binder_shares table)
+4. Implement recipes schema (recipes.ts)
+   - Define recipes table with JSON structure for ingredients and steps
+   - Create recipe sharing table (recipe_shares)
+5. Implement database migration utility (db-migrate.ts)
+
+### Phase 2: Authentication System
+
+#### Step 3: Set Up NextAuth Authentication
+1. Implement auth configuration (src/lib/auth.ts)
+   - Set up Google OAuth provider
+   - Set up Email authentication provider
+2. Create API route (src/app/api/auth/[...nextauth]/route.ts)
+3. Implement middleware for route protection (src/middleware.ts)
+4. Create login interface (src/app/auth/signin/page.tsx)
+5. Create auth error handling page (src/app/auth/error/page.tsx)
+
+#### Step 4: Permissions System
+1. Implement permission checking helper functions (src/lib/permissions.ts)
+2. Create sharing and permission-related APIs
+3. Set up permission validation middleware in API routes
+
+### Phase 3: UI Components
+
+#### Step 5: Create UI Foundation Components
+1. Set up component directory structure
+   ```
+   src/components/
+   ├── ui/         # Atomic components
+   ├── auth/       # Authentication related components
+   ├── recipe/     # Recipe related components
+   ├── binder/     # Binder related components
+   └── sharing/    # Sharing functionality components
+   ```
+2. Implement base UI components
+   - Buttons, inputs, dropdowns, etc.
+   - Cards, tags, modal components
+3. Implement authentication components
+   - Login form
+   - Registration form
+   - User menu
+
+#### Step 6: Implement Layout and Navigation
+1. Create root layout (src/app/layout.tsx)
+2. Implement navigation bar component
+3. Design responsive sidebar
+4. Create footer component
+
+### Phase 4: Core Functionality
+
+#### Step 7: Recipe Management Functionality
+1. Implement recipe form components
+   - Ingredient add/remove interface
+   - Step add/edit/reorder interface
+   - Image upload controls
+2. Create recipe API endpoints
+   - GET /api/recipes - List recipes
+   - GET /api/recipes/:id - Get single recipe
+   - POST /api/recipes - Create new recipe
+   - PUT /api/recipes/:id - Update recipe
+   - DELETE /api/recipes/:id - Delete recipe
+3. Implement recipe pages
+   - Recipe list page (src/app/recipes/page.tsx)
+   - Single recipe detail page (src/app/recipes/[id]/page.tsx)
+   - Recipe creation/edit pages
+
+#### Step 8: Binder Management Functionality
+1. Implement binder form components
+2. Create binder API endpoints
+   - GET /api/binders - List binders
+   - GET /api/binders/:id - Get single binder
+   - POST /api/binders - Create new binder
+   - PUT /api/binders/:id - Update binder
+   - DELETE /api/binders/:id - Delete binder
+3. Implement binder pages
+   - Binder list page (src/app/binders/page.tsx)
+   - Single binder detail page (src/app/binders/[id]/page.tsx)
+   - Binder creation/edit pages
+
+#### Step 9: Sharing Functionality
+1. Implement sharing dialog components
+2. Create sharing API endpoints
+   - POST /api/binders/:id/share - Share binder
+   - POST /api/recipes/:id/share - Share recipe
+   - GET /api/shared - Get content shared with me
+   - DELETE /api/binders/:id/share/:userId - Revoke sharing
+3. Implement sharing permission validation
+4. Create "Shared with me" page
+
+### Phase 5: Optimization and Refinement
+
+#### Step 10: User Interface Refinement
+1. Implement dashboard page (src/app/dashboard/page.tsx)
+2. Add search functionality
+3. Implement filtering and sorting
+4. Add tagging system
+
+#### Step 11: Performance Optimization
+1. Implement image optimization
+   - Use Next.js Image component
+   - Implement lazy loading
+2. Add caching strategies
+3. Optimize client-side component loading
+4. Implement optimistic UI updates
+
+#### Step 12: Security Hardening
+1. Enhance input validation
+   - Use Zod to validate all API inputs
+2. Implement proper error handling
+3. Add CSRF protection
+4. Set up content security policies
+
+### Phase 6: Testing and Deployment
+
+#### Step 13: Quality Assurance
+1. Implement error boundaries
+2. Add loading states and skeletons
+3. Implement detailed logging
+4. Perform cross-browser testing
+
+#### Step 14: Deployment Preparation
+1. Set up production environment variables
+2. Configure database connection
+3. Implement CI/CD
+4. Deploy to Vercel or other hosting service
+
+
+
+
+
+
+
+
+
+
+## UI Wireframes
+
+### Home Page (Public)
+
+
+┌─────────────────────────────────────────────────────┐
+│ ┌─────────┐ Social Recipe Binders    ┌──────┐┌────┐ │
+│ │   Logo  │                          │SignUp││Login│ │
+│ └─────────┘                          └──────┘└────┘ │
+├─────────────────────────────────────────────────────┤
+│ ┌─────────────────────────────────────────────────┐ │
+│ │                                                 │ │
+│ │            Hero Image of Recipe Book            │ │
+│ │                                                 │ │
+│ └─────────────────────────────────────────────────┘ │
+│                                                     │
+│ ┌─────────────────────────────────────────────────┐ │
+│ │                                                 │ │
+│ │  Store your favorite recipes and share          │ │
+│ │  them with friends and family.                  │ │
+│ │                                                 │ │
+│ │         [Get Started] [Learn More]              │ │
+│ │                                                 │ │
+│ └─────────────────────────────────────────────────┘ │
+│                                                     │
+│ ┌───────────────┐ ┌───────────────┐ ┌────────────┐ │
+│ │               │ │               │ │            │ │
+│ │  Feature 1    │ │  Feature 2    │ │  Feature 3 │ │
+│ │  Create       │ │  Organize     │ │  Share     │ │
+│ │  Recipes      │ │  in Binders   │ │  Easily    │ │
+│ │               │ │               │ │            │ │
+│ └───────────────┘ └───────────────┘ └────────────┘ │
+└─────────────────────────────────────────────────────┘
+
+### Dashboard (After Login)
+
+┌─────────────────────────────────────────────────────┐
+│ ┌─────────┐ Social Recipe Binders    ┌──────────┐   │
+│ │   Logo  │                          │ User ▼   │   │
+│ └─────────┘                          └──────────┘   │
+├─────────────────────────────────────────────────────┤
+│ ┌───────────────┐ ┌─────────────────────────────┐   │
+│ │               │ │                             │   │
+│ │ Dashboard     │ │  Welcome back, [Name]       │   │
+│ │ Recipes       │ │                             │   │
+│ │ My Binders    │ │  Quick Stats                │   │
+│ │ Shared With Me│ │  - 12 Recipes               │   │
+│ │ Profile       │ │  - 3 Binders                │   │
+│ │               │ │  - 5 Shared Items           │   │
+│ │               │ │                             │   │
+│ │               │ │  [+ New Recipe] [+ New Binder] │
+│ │               │ │                             │   │
+│ └───────────────┘ │                             │   │
+│                   │ Recent Activity             │   │
+│                   │ ┌─────────────────────────┐ │   │
+│                   │ │ Recipe added: Lasagna   │ │   │
+│                   │ │ Binder shared with John │ │   │
+│                   │ └─────────────────────────┘ │   │
+│                   └─────────────────────────────┘   │
+└─────────────────────────────────────────────────────┘
+
+### Recipe Binders Page
+
+┌─────────────────────────────────────────────────────┐
+│ [Navigation Header]                                 │
+├─────────────────────────────────────────────────────┤
+│ My Recipe Binders                   [+ New Binder]  │
+│                                                     │
+│ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐    │
+│ │ ┌─────────┐ │ │ ┌─────────┐ │ │ ┌─────────┐ │    │
+│ │ │  Image  │ │ │ │  Image  │ │ │ │  Image  │ │    │
+│ │ └─────────┘ │ │ └─────────┘ │ │ └─────────┘ │    │
+│ │             │ │             │ │             │    │
+│ │ Italian     │ │ Desserts    │ │ Quick Meals │    │
+│ │ Classics    │ │             │ │             │    │
+│ │             │ │ 8 recipes   │ │ 5 recipes   │    │
+│ │ 12 recipes  │ │             │ │             │    │
+│ │             │ │ Private     │ │ Shared (3)  │    │
+│ │ Public      │ │             │ │             │    │
+│ │             │ │ [Options ▼] │ │ [Options ▼] │    │
+│ │ [Options ▼] │ │             │ │             │    │
+│ └─────────────┘ └─────────────┘ └─────────────┘    │
+│                                                     │
+│ Shared With Me                                      │
+│                                                     │
+│ ┌─────────────┐                                     │
+│ │ ┌─────────┐ │                                     │
+│ │ │  Image  │ │                                     │
+│ │ └─────────┘ │                                     │
+│ │             │                                     │
+│ │ Family      │                                     │
+│ │ Favorites   │                                     │
+│ │             │                                     │
+│ │ 15 recipes  │                                     │
+│ │             │                                     │
+│ │ By: Sarah   │                                     │
+│ │             │                                     │
+│ │ [View]      │                                     │
+│ └─────────────┘                                     │
+└─────────────────────────────────────────────────────┘
+
+### Single Binder View
+┌─────────────────────────────────────────────────────┐
+│ [Navigation Header]                                 │
+├─────────────────────────────────────────────────────┤
+│ ← Back to Binders                                   │
+│                                                     │
+│ Italian Classics                   [Share] [Edit]   │
+│                                                     │
+│ Description: Traditional Italian recipes collected  │
+│ from my grandmother.                                │
+│                                                     │
+│ ┌────────────────────────────────────────────────┐  │
+│ │ Recipes (12)                    [+ Add Recipe] │  │
+│ │                                                │  │
+│ │ ┌──────────────┐ ┌──────────────┐             │  │
+│ │ │┌────────────┐│ │┌────────────┐│             │  │
+│ │ ││   Image    ││ ││   Image    ││             │  │
+│ │ │└────────────┘│ │└────────────┘│             │  │
+│ │ │              │ │              │             │  │
+│ │ │ Lasagna      │ │ Risotto      │             │  │
+│ │ │              │ │              │             │  │
+│ │ │ Prep: 30 min │ │ Prep: 15 min │             │  │
+│ │ │ Cook: 45 min │ │ Cook: 25 min │             │  │
+│ │ │              │ │              │             │  │
+│ │ │ [View]       │ │ [View]       │             │  │
+│ │ └──────────────┘ └──────────────┘             │  │
+│ │                                                │  │
+│ │ ┌──────────────┐ ┌──────────────┐             │  │
+│ │ │┌────────────┐│ │┌────────────┐│             │  │
+│ │ ││   Image    ││ ││   Image    ││             │  │
+│ │ │└────────────┘│ │└────────────┘│             │  │
+│ │ │              │ │              │             │  │
+│ │ │ Tiramisu     │ │ Spaghetti    │             │  │
+│ │ │              │ │ Carbonara    │             │  │
+│ │ │ Prep: 20 min │ │              │             │  │
+│ │ │ Chill: 4 hrs │ │ Prep: 10 min │             │  │
+│ │ │              │ │ Cook: 15 min │             │  │
+│ │ │ [View]       │ │ [View]       │             │  │
+│ │ └──────────────┘ └──────────────┘             │  │
+│ └────────────────────────────────────────────────┘  │
+
+### Recipe View
+
+┌─────────────────────────────────────────────────────┐
+│ [Navigation Header]                                 │
+├─────────────────────────────────────────────────────┤
+│ ← Back to Italian Classics                          │
+│                                                     │
+│ ┌───────────────────────────────────────────────┐   │
+│ │                                               │   │
+│ │                 Recipe Image                  │   │
+│ │                                               │   │
+│ └───────────────────────────────────────────────┘   │
+│                                                     │
+│ Lasagna                       [Edit] [Share] [Print]│
+│                                                     │
+│ ┌─────────────────┐ ┌──────────────────────────────┐│
+│ │ Prep: 30 min    │ │ A classic Italian dish with  ││
+│ │ Cook: 45 min    │ │ layers of pasta, rich meat   ││
+│ │ Servings: 8     │ │ sauce, and creamy cheese.    ││
+│ │ Source: Grandma │ │                              ││
+│ └─────────────────┘ └──────────────────────────────┘│
+│                                                     │
+│ Ingredients                                         │
+│ ┌─────────────────────────────────────────────────┐ │
+│ │ □ 1 pound ground beef                           │ │
+│ │ □ 1 onion, chopped                              │ │
+│ │ □ 2 garlic cloves, minced                       │ │
+│ │ □ 1 (28 oz) can crushed tomatoes                │ │
+│ │ □ 2 (6 oz) cans tomato paste                    │ │
+│ │ □ 2 (15 oz) containers ricotta cheese           │ │
+│ │ □ 2 eggs                                        │ │
+│ │ □ 4 cups shredded mozzarella cheese             │ │
+│ │ □ 1/2 cup grated Parmesan cheese                │ │
+│ │ □ 12 lasagna noodles                            │ │
+│ └─────────────────────────────────────────────────┘ │
+│                                                     │
+│ Instructions                                        │
+│ ┌─────────────────────────────────────────────────┐ │
+│ │ 1. Brown the ground beef, onion, and garlic     │ │
+│ │    in a large pot over medium heat.             │ │
+│ │                                                 │ │
+│ │ 2. Add crushed tomatoes and tomato paste.       │ │
+│ │    Simmer for 30 minutes.                       │ │
+│ │                                                 │ │
+│ │ 3. In a bowl, mix ricotta cheese and eggs.      │ │
+│ │                                                 │ │
+│ │ 4. Layer in baking dish: sauce, noodles,        │ │
+│ │    ricotta mixture, mozzarella. Repeat layers.  │ │
+│ │                                                 │ │
+│ │ 5. Top with remaining sauce and Parmesan.       │ │
+│ │                                                 │ │
+│ │ 6. Bake at 375°F for 45 minutes.                │ │
+│ └─────────────────────────────────────────────────┘ │
+│                                                     │
+│ Tags: Italian, Pasta, Dinner, Family Meals          │
+└─────────────────────────────────────────────────────┘
+### Sharing Interface
+
+┌─────────────────────────────────────────────────────┐
+│                  Share Recipe                        │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│ Sharing "Lasagna"                                   │
+│                                                     │
+│ ┌─────────────────────────────────────────────────┐ │
+│ │ Email Addresses:                                │ │
+│ │ ┌───────────────────────────────────────────┐   │ │
+│ │ │ john@example.com, sarah@example.com       │   │ │
+│ │ └───────────────────────────────────────────┘   │ │
+│ │                                                 │ │
+│ │ Permission Level:                               │ │
+│ │ ○ View only    ● Edit    ○ Admin               │ │
+│ │                                                 │ │
+│ │ Add a message (optional):                       │ │
+│ │ ┌───────────────────────────────────────────┐   │ │
+│ │ │ Here's that lasagna recipe I promised!    │   │ │
+│ │ │                                           │   │ │
+│ │ └───────────────────────────────────────────┘   │ │
+│ │                                                 │ │
+│ │ ┌───────────────────────────────────────────┐   │ │
+│ │ │ Generate Shareable Link                   │   │ │
+│ │ └───────────────────────────────────────────┘   │ │
+│ │                                                 │ │
+│ │         [Cancel]            [Share]             │ │
+│ └─────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────┘
+
+### Mobile View (Recipe Page)
+
+┌───────────────────┐
+│ ≡ Recipe Binders  │
+├───────────────────┤
+│ ← Back            │
+│                   │
+│ ┌───────────────┐ │
+│ │  Recipe Image │ │
+│ └───────────────┘ │
+│                   │
+│ Lasagna           │
+│                   │
+│ ⋮ (Actions menu)  │
+│                   │
+│ Prep: 30 min      │
+│ Cook: 45 min      │
+│ Servings: 8       │
+│                   │
+│ Ingredients       │
+│ ──────────────    │
+│ □ 1 lb ground beef│
+│ □ 1 onion, chopped│
+│ □ 2 cloves garlic │
+│ □ 28oz tomatoes   │
+│ □ 12oz tom. paste │
+│ □ 30oz ricotta    │
+│ □ 2 eggs          │
+│ □ 4c mozzarella   │
+│ □ 1/2c parmesan   │
+│ □ 12 noodles      │
+│                   │
+│ Instructions      │
+│ ──────────────    │
+│ 1. Brown beef     │
+│    with onions    │
+│                   │
+│ 2. Add tomatoes   │
+│    & paste        │
+│                   │
+│ 3. Mix ricotta    │
+│    and eggs       │
+│                   │
+│ 4. Layer in dish  │
+│                   │
+│ 5. Top with       │
+│    parmesan       │
+│                   │
+│ 6. Bake at 375°F  │
+│    for 45 min     │
+└───────────────────┘
+
+###
